@@ -179,6 +179,11 @@ extern "C" void app_main()
 	lora_module_init();
 
 	i2c_master_init();
+	if ( hdc1080_init(I2C_MASTER_NUM) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to initialize HDC1080 sensor!\r\n");
+    }
+    
 	gpio_led_init();
 
     gps_init();
@@ -205,10 +210,6 @@ extern "C" void app_main()
 									 }
 	}
 
-	if ( hdc1080_init(I2C_MASTER_NUM) != ESP_OK)
-	{
-		ESP_LOGE(TAG, "Failed to initialize HDC1080 sensor!\r\n");
-	}
 
     ESP_LOGI(TAG, "Creating main message queue\r\n");
     /* Create the main task message queue */
@@ -444,7 +445,7 @@ static void main_task(void * arg)
     if (ttn.join())
     {
         ESP_LOGI(TAG, "Join accepted, main event loop started!\r\n");
-        while(1)
+        while(true)
         {
             xQueueReceive(main_task_queue, &( msg ), portMAX_DELAY);
 
