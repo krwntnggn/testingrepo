@@ -30,9 +30,10 @@
 #include "soc/rtc.h"
 #include "nmea_parser.h"
 #include "dustsensor_parser.h"
-#include "hdc1080.h"
+//#include "hdc1080.h"
 #include "TheThingsNetwork.h"
 #include "CayenneLPP.h"
+#include "sht21x.h"
 
 
 #define _I2C_NUMBER(num) I2C_NUM_##num
@@ -145,6 +146,9 @@ static void i2c_master_deinit(void);
 static void gpio_led_init(void);
 static void gpio_led_deinit(void);
 
+static void gpio_5vreg_init(void);
+static void gpio_5vreg_deinit(void);
+
 static void lora_module_init(void);
 static void lora_module_deinit(void);
 
@@ -179,18 +183,24 @@ extern "C" void app_main()
 	lora_module_init();
 
 	i2c_master_init();
+    /*
 	if ( hdc1080_init(I2C_MASTER_NUM) != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to initialize HDC1080 sensor!\r\n");
     }
+    */
     
 	gpio_led_init();
+    gpio_5vreg_init();
 
+    /*
     gps_init();
     dustsensor_init();
+    */
 
 	/* Set LED on (output low) */
 	gpio_set_level((gpio_num_t) CONFIG_WAKEUP_LED, 1);
+	gpio_set_level((gpio_num_t) CONFIG_ENABLE_5V, 1);
 
 
 	
@@ -297,6 +307,23 @@ static void gpio_led_deinit(void)
     gpio_set_pull_mode((gpio_num_t) CONFIG_WAKEUP_LED, GPIO_FLOATING);
     gpio_set_direction((gpio_num_t) CONFIG_WAKEUP_LED, GPIO_MODE_INPUT); 
 }
+
+static void gpio_5vreg_init(void)
+{
+    gpio_pad_select_gpio((gpio_num_t) CONFIG_ENABLE_5V);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction((gpio_num_t) CONFIG_ENABLE_5V, GPIO_MODE_OUTPUT);
+}
+
+static void gpio_5vreg_deinit(void)
+{
+    gpio_set_level((gpio_num_t) CONFIG_ENABLE_5V, 0);
+    gpio_hold_en((gpio_num_t) CONFIG_ENABLE_5V);
+    gpio_deep_sleep_hold_en();
+    //gpio_set_pull_mode((gpio_num_t) CONFIG_ENABLE_5V, GPIO_FLOATING);
+    //gpio_set_direction((gpio_num_t) CONFIG_ENABLE_5V, GPIO_MODE_INPUT); 
+}
+
 
 static void lora_module_init(void)
 {
@@ -482,23 +509,27 @@ void send_ttn_message()
 {
     float currTemp = 0.0;
     float currHumid = 0.0;
-    float waterLevel = 0.0;
+    //float waterLevel = 0.0;
 
     lpp.reset();
 
     printf("Waiting for next available transmit event ...\n");
+    /*
     if ( hdc1080_read_temperature(I2C_MASTER_NUM, &currTemp, &currHumid) == ESP_OK)
     {
 
         printf("Current temperature = %.2f C, Relative Humidity = %.2f %%\n", 
                 currTemp, currHumid);
     }
-
+    */
+    sht21_humidity(I2C_MASTER_NUM, &currHumid);
+    sht21_temperature(I2C_MASTER_NUM, &currTemp);
+    
     // for now random values for water level
-    waterLevel = rand() % 10 + 1;
+    //waterLevel = rand() % 10 + 1;
     lpp.addTemperature(0, currTemp);
     lpp.addRelativeHumidity(1, currHumid);    
-    lpp.addAnalogInput(2, waterLevel); 
+    //lpp.addAnalogInput(2, waterLevel); 
 
 
     TTNResponseCode res = ttn.transmitMessage(lpp.getBuffer(), lpp.getSize());

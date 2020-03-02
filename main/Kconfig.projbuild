@@ -114,15 +114,15 @@ config RFM95W_RST
 
 config RFM95W_DIO0
     int "Lora RFM95W DIO0 pin"
-    range 0 34
-    default 26
+    range 0 35
+    default 34 
     help
         "The DIO0 pin of the RFM95W module"
 
 config RFM95W_DIO1
     int "Lora RFM95W DIO1 pin"
-    range 0 34
-    default 34
+    range 0 35
+    default 35
     help
         "The DIO1 pin of the RFM95W module"
 
@@ -163,9 +163,16 @@ config WAKEUP_INTERVAL
 config WAKEUP_LED
     int "GPIO Pin connected to Wakeup LED"
     range 0 34
-    default 15
+    default 12
     help 
         This option sets the wakeup led pin that is connected to the
         wakeup led.
+
+config ENABLE_5V
+    int "GPIO Pin connected to enable 5V pin"
+    range 0 34
+    default 2
+    help 
+        This option sets enable pin of the 5V voltage regulator 
 
 endmenu
